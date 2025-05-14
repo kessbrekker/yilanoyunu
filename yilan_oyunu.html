@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Yılan Oyunu</title>
+    <style>
+        body { background: #111; color: #fff; text-align: center; }
+        canvas { background: #222; display: block; margin: 20px auto; }
+        #score { font-size: 24px; margin-top: 10px; }
+    </style>
+</head>
+<h1>Yılan Oyunu</h1>
+<body>
+    <div id="score">Skor: 0</div>
+    <canvas id="game" width="600" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const blockSize = 20;
+        const width = canvas.width;
+        const height = canvas.height;
+
+        let snake = [
+            {x: 100, y: 100},
+            {x: 80, y: 100},
+            {x: 60, y: 100}
+        ];
+        let direction = {x: blockSize, y: 0};
+        let apple = randomPosition();
+        let score = 0;
+        let gameOver = false;
+
+        function randomPosition() {
+            let pos;
+            do {
+                pos = {
+                    x: Math.floor(Math.random() * (width / blockSize)) * blockSize,
+                    y: Math.floor(Math.random() * (height / blockSize)) * blockSize
+                };
+            } while (snake.some(block => block.x === pos.x && block.y === pos.y));
+            return pos;
+        }
+
+        function drawBlock(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, blockSize, blockSize);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            // Draw snake
+            snake.forEach((block, i) => drawBlock(block.x, block.y, i === 0 ? '#0f0' : '#0a0'));
+            // Draw apple
+            drawBlock(apple.x, apple.y, '#f00');
+        }
+
+        function update() {
+            if (gameOver) return;
+            const newHead = {
+                x: snake[0].x + direction.x,
+                y: snake[0].y + direction.y
+            };
+
+            // Duvara veya kendine çarpma kontrolü
+            if (
+                newHead.x < 0 || newHead.x >= width ||
+                newHead.y < 0 || newHead.y >= height ||
+                snake.some(block => block.x === newHead.x && block.y === newHead.y)
+            ) {
+                gameOver = true;
+                document.getElementById('score').textContent = `Oyun Bitti! Skor: ${score}`;
+                return;
+            }
+
+            snake.unshift(newHead);
+
+            // Elma yeme kontrolü
+            if (newHead.x === apple.x && newHead.y === apple.y) {
+                score++;
+                document.getElementById('score').textContent = `Skor: ${score}`;
+                apple = randomPosition();
+            } else {
+                snake.pop();
+            }
+        }
+
+        document.addEventListener('keydown', e => {
+            if (gameOver) return;
+            if (e.key === 'ArrowUp' && direction.y === 0) {
+                direction = {x: 0, y: -blockSize};
+            } else if (e.key === 'ArrowDown' && direction.y === 0) {
+                direction = {x: 0, y: blockSize};
+            } else if (e.key === 'ArrowLeft' && direction.x === 0) {
+                direction = {x: -blockSize, y: 0};
+            } else if (e.key === 'ArrowRight' && direction.x === 0) {
+                direction = {x: blockSize, y: 0};
+            }
+        });
+
+        function gameLoop() {
+            update();
+            draw();
+            if (!gameOver) {
+                setTimeout(gameLoop, 100);
+            }
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
